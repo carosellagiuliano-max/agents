@@ -2,7 +2,7 @@ import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import { db, schema } from '@schnittwerk/db';
 import { eq } from 'drizzle-orm';
-import { formatCurrency, calculateTaxBreakdown, SwissTaxRate } from '@schnittwerk/payments';
+import { formatCurrency, SwissTaxRate } from '@schnittwerk/payments';
 
 interface ReceiptData {
   orderId: string;
@@ -64,28 +64,32 @@ export async function generateReceiptPDF(orderId: string): Promise<Buffer> {
     throw new Error(`Order ${orderId} not found`);
   }
 
+  // Cast order to any to access nested relations (TypeScript limitation with Drizzle query builder)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orderWithRelations = order as any;
+
   // Prepare receipt data
   const receiptData: ReceiptData = {
-    orderId: order.id,
-    receiptNumber: `R-${order.orderNumber}`,
-    date: order.createdAt,
+    orderId: orderWithRelations.id,
+    receiptNumber: `R-${orderWithRelations.orderNumber}`,
+    date: orderWithRelations.createdAt,
     customer: {
-      name: `${order.customer?.firstName} ${order.customer?.lastName}`,
-      email: order.customer?.email || '',
-      address: order.shippingAddress || undefined,
+      name: `${orderWithRelations.customer?.firstName || ''} ${orderWithRelations.customer?.lastName || ''}`.trim(),
+      email: orderWithRelations.customer?.email || '',
+      address: orderWithRelations.shippingAddress || undefined,
     },
-    items: order.orderItems.map((item) => ({
+    items: orderWithRelations.orderItems.map((item: any) => ({
       description: item.productVariant?.product?.name || item.name,
       quantity: item.quantity,
-      unitPrice: item.priceAtPurchase,
+      unitPrice: Number(item.priceAtPurchase),
       taxRate: item.taxRate as SwissTaxRate,
-      total: item.totalPrice,
+      total: Number(item.totalPrice),
     })),
-    subtotal: order.subtotal,
-    taxBreakdown: calculateTaxBreakdownFromOrder(order),
-    total: order.totalAmount,
-    paymentMethod: order.payments?.[0]?.method || 'unknown',
-    isCashPayment: order.payments?.[0]?.method === 'cash',
+    subtotal: Number(orderWithRelations.subtotal),
+    taxBreakdown: calculateTaxBreakdownFromOrder(orderWithRelations),
+    total: Number(orderWithRelations.subtotal) + Number(orderWithRelations.taxAmount),
+    paymentMethod: orderWithRelations.payments?.[0]?.method || 'unknown',
+    isCashPayment: orderWithRelations.payments?.[0]?.method === 'cash',
   };
 
   return createPDF(receiptData);
@@ -98,13 +102,31 @@ export async function generateRefundReceiptPDF(refundId: string): Promise<Buffer
   // Fetch refund data
   const refund = await db.query.refunds.findFirst({
     where: eq(schema.refunds.id, refundId),
+  });
+
+  if (!refund) {
+    throw new Error(`Refund ${refundId} not found`);
+  }
+
+  // Fetch payment to get order ID
+  const payment = await db.query.payments.findFirst({
+    where: eq(schema.payments.id, refund.paymentId),
+  });
+
+  if (!payment || !payment.orderId) {
+    throw new Error(`Order not found for refund ${refundId}`);
+  }
+
+  // Fetch order with details
+  const order = await db.query.orders.findFirst({
+    where: eq(schema.orders.id, payment.orderId),
     with: {
-      payment: {
+      customer: true,
+      orderItems: {
         with: {
-          order: {
+          productVariant: {
             with: {
-              customer: true,
-              orderItems: true,
+              product: true,
             },
           },
         },
@@ -112,35 +134,34 @@ export async function generateRefundReceiptPDF(refundId: string): Promise<Buffer
     },
   });
 
-  if (!refund) {
-    throw new Error(`Refund ${refundId} not found`);
+  if (!order) {
+    throw new Error(`Order ${payment.orderId} not found`);
   }
 
-  const order = refund.payment?.order;
-  if (!order) {
-    throw new Error(`Order not found for refund ${refundId}`);
-  }
+  // Cast order to any to access nested relations (TypeScript limitation with Drizzle query builder)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orderWithRelations = order as any;
 
   // Prepare refund receipt data
   const receiptData: ReceiptData = {
-    orderId: order.id,
-    receiptNumber: `RF-${order.orderNumber}`,
+    orderId: orderWithRelations.id,
+    receiptNumber: `RF-${orderWithRelations.orderNumber}`,
     date: refund.createdAt,
     customer: {
-      name: `${order.customer?.firstName} ${order.customer?.lastName}`,
-      email: order.customer?.email || '',
+      name: `${orderWithRelations.customer?.firstName || ''} ${orderWithRelations.customer?.lastName || ''}`.trim(),
+      email: orderWithRelations.customer?.email || '',
     },
-    items: order.orderItems.map((item) => ({
-      description: item.name,
+    items: orderWithRelations.orderItems.map((item: any) => ({
+      description: item.productVariant?.product?.name || item.name,
       quantity: item.quantity,
-      unitPrice: -item.priceAtPurchase, // Negative for refund
+      unitPrice: -Number(item.priceAtPurchase), // Negative for refund
       taxRate: item.taxRate as SwissTaxRate,
-      total: -item.totalPrice,
+      total: -Number(item.totalPrice),
     })),
-    subtotal: -order.subtotal,
-    taxBreakdown: calculateTaxBreakdownFromOrder(order, true), // true = refund (negative)
-    total: -refund.amount,
-    paymentMethod: refund.payment?.method || 'unknown',
+    subtotal: -Number(orderWithRelations.subtotal),
+    taxBreakdown: calculateTaxBreakdownFromOrder(orderWithRelations, true), // true = refund (negative)
+    total: -Number(refund.amount),
+    paymentMethod: payment?.method || 'unknown',
     isCashPayment: false,
   };
 
@@ -236,7 +257,8 @@ async function createPDF(data: ReceiptData, isRefund = false): Promise<Buffer> {
       doc.font('Helvetica').fontSize(9);
 
       data.items.forEach((item) => {
-        const taxPercentage = parseFloat(item.taxRate.replace('_', '.'));
+        const taxRateStr = String(item.taxRate);
+        const taxPercentage = parseFloat(taxRateStr.replace('_', '.'));
 
         doc
           .text(item.description, 50, yPosition, { width: 200, continued: false })
@@ -273,7 +295,8 @@ async function createPDF(data: ReceiptData, isRefund = false): Promise<Buffer> {
 
       // Tax breakdown by rate
       data.taxBreakdown.forEach((taxItem) => {
-        const taxPercentage = parseFloat(taxItem.rate.replace('_', '.'));
+        const taxRateStr = String(taxItem.rate);
+        const taxPercentage = parseFloat(taxRateStr.replace('_', '.'));
         doc.text(`MwSt ${taxPercentage}%:`, summaryX, summaryY, { width: 100 });
         doc.text(formatCurrency(taxItem.tax), summaryX + 100, summaryY, {
           width: 95,
@@ -301,7 +324,7 @@ async function createPDF(data: ReceiptData, isRefund = false): Promise<Buffer> {
       if (data.isCashPayment) {
         doc
           .fontSize(8)
-          .text('Bargeldbeträge werden auf 5 Rappen gerundet.', { align: 'left', italics: true });
+          .text('Bargeldbeträge werden auf 5 Rappen gerundet.', { align: 'left' as const });
       }
 
       doc.moveDown(2);
@@ -318,7 +341,7 @@ async function createPDF(data: ReceiptData, isRefund = false): Promise<Buffer> {
             .fontSize(8)
             .text('Scannen Sie den QR-Code für', 140, qrY, { width: 200 })
             .text('digitale Verifizierung', 140, qrY + 12, { width: 200 })
-            .text(`Beleg-ID: ${data.receiptNumber}`, 140, qrY + 30, { width: 200, color: '#666' });
+            .text(`Beleg-ID: ${data.receiptNumber}`, 140, qrY + 30, { width: 200 });
 
           doc.moveDown(5);
 
@@ -327,12 +350,12 @@ async function createPDF(data: ReceiptData, isRefund = false): Promise<Buffer> {
             .fontSize(8)
             .font('Helvetica')
             .text('Vielen Dank für Ihren Besuch bei Schnittwerk!', 50, doc.page.height - 100, {
-              align: 'center',
+              align: 'center' as const,
             })
-            .text('Bei Fragen wenden Sie sich bitte an unseren Kundenservice.', { align: 'center' })
+            .text('Bei Fragen wenden Sie sich bitte an unseren Kundenservice.', { align: 'center' as const })
             .text(
               `© ${new Date().getFullYear()} Schnittwerk by Vanessa Carosella. Alle Rechte vorbehalten.`,
-              { align: 'center', color: '#999' }
+              { align: 'center' as const }
             );
 
           doc.end();
@@ -359,20 +382,21 @@ function calculateTaxBreakdownFromOrder(
 
   order.orderItems.forEach((item: any) => {
     const rate = item.taxRate as SwissTaxRate;
-    const taxPercentage = parseFloat(rate.replace('_', '.')) / 100;
+    const rateStr = String(rate);
+    const taxPercentage = parseFloat(rateStr.replace('_', '.')) / 100;
 
-    const net = item.priceAtPurchase * item.quantity;
+    const net = Number(item.priceAtPurchase) * item.quantity;
     const tax = net * taxPercentage;
 
-    const existing = breakdown.get(rate) || { net: 0, tax: 0 };
-    breakdown.set(rate, {
+    const existing = breakdown.get(rateStr) || { net: 0, tax: 0 };
+    breakdown.set(rateStr, {
       net: existing.net + net,
       tax: existing.tax + tax,
     });
   });
 
-  const result = Array.from(breakdown.entries()).map(([rate, values]) => ({
-    rate: rate as SwissTaxRate,
+  const result = Array.from(breakdown.entries()).map(([rateStr, values]) => ({
+    rate: rateStr as unknown as SwissTaxRate,
     net: isRefund ? -values.net : values.net,
     tax: isRefund ? -values.tax : values.tax,
   }));
