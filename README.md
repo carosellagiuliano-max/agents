@@ -88,8 +88,8 @@ pnpm test         # Run tests
 
 This project is developed in strict phases:
 
-- **Phase 0** (Current): Architecture and Foundation ✅
-- **Phase 1**: Database and RLS
+- **Phase 0**: Architecture and Foundation ✅
+- **Phase 1**: Database and RLS ✅
 - **Phase 2**: Booking Logic and Email
 - **Phase 3**: Shop and Payments
 - **Phase 4**: Admin Portal and Inventory
@@ -148,4 +148,3 @@ UNLICENSED - Private project for Schnittwerk by Vanessa Carosella
 ---
 
 Built with ❤️ in St. Gallen
-
