@@ -11,25 +11,27 @@
     "test": "echo 'No tests configured yet'"
   },
   "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.2.33",
-    "@sentry/nextjs": "^7.91.0",
-    "zod": "^3.22.4",
-    "pino": "^8.17.2",
-    "pino-pretty": "^10.3.1",
     "@schnittwerk/db": "workspace:*",
     "@schnittwerk/lib": "workspace:*",
-    "drizzle-orm": "^0.29.1"
+    "@sentry/nextjs": "^7.91.0",
+    "drizzle-orm": "^0.29.1",
+    "ical-generator": "^10.0.0",
+    "next": "14.2.33",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "resend": "^6.4.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.33",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.33"
+    "typescript": "^5"
   }
 }

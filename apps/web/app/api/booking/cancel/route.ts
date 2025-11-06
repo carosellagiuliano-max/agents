@@ -10,6 +10,7 @@ import { cancelAppointmentSchema } from '@schnittwerk/lib';
 import { db, schema } from '@schnittwerk/db';
 import { eq, and } from 'drizzle-orm';
 import { createRequestLogger, getRequestId } from '@/lib/logger';
+import { sendCancellationConfirmation } from '@/lib/services/email';
 
 export async function POST(request: NextRequest) {
   const requestId = getRequestId(request.headers);
@@ -115,7 +116,25 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // TODO: Send cancellation confirmation email (Phase 2.5)
+    // Send cancellation confirmation email
+    if (!result.needsApproval && process.env.RESEND_API_KEY) {
+      sendCancellationConfirmation(data.appointmentId, data.reason)
+        .then((emailResult) => {
+          if (emailResult.success) {
+            logger.info('Cancellation confirmation email sent', {
+              appointmentId: data.appointmentId,
+            });
+          } else {
+            logger.error('Failed to send cancellation email', {
+              appointmentId: data.appointmentId,
+              error: emailResult.error,
+            });
+          }
+        })
+        .catch((error) => {
+          logger.error('Email sending error', { error });
+        });
+    }
 
     if (result.needsApproval) {
       return NextResponse.json({

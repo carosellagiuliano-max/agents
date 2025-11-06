@@ -10,6 +10,7 @@ import { createAppointmentSchema } from '@schnittwerk/lib';
 import { db, schema } from '@schnittwerk/db';
 import { and, eq, gte, lte, or, sql } from 'drizzle-orm';
 import { createRequestLogger, getRequestId } from '@/lib/logger';
+import { sendAppointmentConfirmation } from '@/lib/services/email';
 
 export async function POST(request: NextRequest) {
   const requestId = getRequestId(request.headers);
@@ -166,7 +167,25 @@ export async function POST(request: NextRequest) {
       return { appointment, service, customer, staff };
     });
 
-    // TODO: Send confirmation email (Phase 2.5)
+    // Send confirmation email with ICS attachment
+    if (process.env.RESEND_API_KEY) {
+      sendAppointmentConfirmation(result.appointment.id)
+        .then((emailResult) => {
+          if (emailResult.success) {
+            logger.info('Confirmation email sent', { appointmentId: result.appointment.id });
+          } else {
+            logger.error('Failed to send confirmation email', {
+              appointmentId: result.appointment.id,
+              error: emailResult.error,
+            });
+          }
+        })
+        .catch((error) => {
+          logger.error('Email sending error', { error });
+        });
+    } else {
+      logger.warn('RESEND_API_KEY not configured - skipping email');
+    }
 
     return NextResponse.json({
       success: true,
