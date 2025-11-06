@@ -46,8 +46,14 @@ export type CancelAppointmentRequest = z.infer<typeof cancelAppointmentSchema>;
  */
 export const rescheduleRequestSchema = z.object({
   appointmentId: z.string().uuid('Invalid appointment ID'),
-  preferredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
-  preferredTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format').optional(),
+  preferredDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+    .optional(),
+  preferredTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format')
+    .optional(),
   reason: z.string().max(500).optional(),
 });
 

@@ -17,7 +17,10 @@
     "@sentry/nextjs": "^7.91.0",
     "zod": "^3.22.4",
     "pino": "^8.17.2",
-    "pino-pretty": "^10.3.1"
+    "pino-pretty": "^10.3.1",
+    "@schnittwerk/db": "workspace:*",
+    "@schnittwerk/lib": "workspace:*",
+    "drizzle-orm": "^0.29.1"
   },
   "devDependencies": {
     "typescript": "^5",
