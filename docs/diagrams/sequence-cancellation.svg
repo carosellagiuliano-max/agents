@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Sequenzdiagramm Stornierung</title>
+  <desc id="desc">Stornierung oder Verschiebeanfrage einer bestehenden Buchung.</desc>
+  <rect width="960" height="540" fill="#ffffff"/>
+  <g font-family="Inter, Arial, sans-serif" font-size="16" fill="#0f172a">
+    <text x="120" y="40" text-anchor="middle">Kund:in</text>
+    <text x="300" y="40" text-anchor="middle">Self-Service</text>
+    <text x="480" y="40" text-anchor="middle">API Layer</text>
+    <text x="660" y="40" text-anchor="middle">Postgres</text>
+    <text x="840" y="40" text-anchor="middle">Mail &amp; Audit</text>
+  </g>
+  <g stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2">
+    <line x1="120" y1="60" x2="120" y2="500" />
+    <line x1="300" y1="60" x2="300" y2="500" />
+    <line x1="480" y1="60" x2="480" y2="500" />
+    <line x1="660" y1="60" x2="660" y2="500" />
+    <line x1="840" y1="60" x2="840" y2="500" />
+  </g>
+  <g font-family="Inter, Arial, sans-serif" font-size="14" fill="#0f172a">
+    <rect x="120" y="80" width="180" height="36" fill="#fee2e2" stroke="#b91c1c" rx="8" ry="8"/>
+    <text x="210" y="104" text-anchor="middle">1. Storno anstoßen</text>
+    <line x1="300" y1="116" x2="480" y2="116" stroke="#b91c1c" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="300" y="140" width="180" height="36" fill="#ede9fe" stroke="#5b21b6" rx="8" ry="8"/>
+    <text x="390" y="164" text-anchor="middle">2. Policy prüfen</text>
+    <line x1="480" y1="172" x2="660" y2="172" stroke="#5b21b6" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="660" y1="208" x2="480" y2="208" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="480" y="220" width="180" height="36" fill="#d9f99d" stroke="#4d7c0f" rx="8" ry="8"/>
+    <text x="570" y="244" text-anchor="middle">3. Terminstatus ändern</text>
+    <line x1="480" y1="260" x2="660" y2="260" stroke="#4d7c0f" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="660" y1="296" x2="480" y2="296" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="480" y="300" width="180" height="36" fill="#bae6fd" stroke="#0369a1" rx="8" ry="8"/>
+    <text x="570" y="324" text-anchor="middle">4. Audit Log schreiben</text>
+    <line x1="480" y1="344" x2="840" y2="344" stroke="#0369a1" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="480" y="360" width="180" height="36" fill="#fbcfe8" stroke="#be185d" rx="8" ry="8"/>
+    <text x="570" y="384" text-anchor="middle">5. Mail &amp; ICS schicken</text>
+    <line x1="840" y1="404" x2="120" y2="404" stroke="#be185d" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="230" y="428" text-anchor="middle">6. UI informiert Status</text>
+  </g>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0f172a" />
+    </marker>
+  </defs>
+</svg>

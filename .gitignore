@@ -1,0 +1,10 @@
+node_modules
+.pnpm-store
+.env
+.next
+out
+coverage
+.husky/_
+.vscode
+.DS_Store
+*.tsbuildinfo
