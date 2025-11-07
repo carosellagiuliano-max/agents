@@ -3,9 +3,14 @@ export class ApiError extends Error {
     message: string,
     readonly status: number = 400,
     readonly details?: Record<string, unknown>,
+    readonly options: { headers?: Record<string, string> } = {},
   ) {
     super(message);
     this.name = 'ApiError';
+  }
+
+  get headers(): Record<string, string> {
+    return this.options.headers ?? {};
   }
 }
 

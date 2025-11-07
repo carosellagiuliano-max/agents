@@ -4,7 +4,7 @@ import type { Database, SQL } from '@schnittwerk/db';
 import { and, eq, inArray, notInArray, schema, sql } from '@schnittwerk/db';
 
 import { getDatabase } from '../../../../lib/db';
-import { ApiError } from './errors';
+import { ApiError } from '@/app/api/_lib/errors';
 import type { AvailabilityQueryInput } from './validation';
 import {
   alignToStep,

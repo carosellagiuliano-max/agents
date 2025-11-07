@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { createRequestLogger } from '@schnittwerk/lib';
 
+import { enforceBookingGuards } from '@/app/api/_lib/security';
+
 import { requestReschedule } from '../_lib/booking';
 import { getRequestActor, requireRole } from '../_lib/auth';
 import { handleRouteError } from '../_lib/responses';
@@ -14,6 +16,7 @@ const RESCHEDULE_ROLES = ['customer', 'admin', 'manager', 'reception'];
 export async function POST(request: NextRequest) {
   const actor = getRequestActor(request);
   requireRole(actor, RESCHEDULE_ROLES);
+  await enforceBookingGuards(request, actor);
 
   const requestId = request.headers.get('x-request-id') ?? randomUUID();
   const logger = createRequestLogger({

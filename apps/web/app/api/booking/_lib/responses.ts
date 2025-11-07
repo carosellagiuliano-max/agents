@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 
-import { isApiError } from './errors';
+import { isApiError } from '@/app/api/_lib/errors';
 
 export function handleRouteError(error: unknown) {
   if (isApiError(error)) {
@@ -10,7 +10,7 @@ export function handleRouteError(error: unknown) {
         error: error.message,
         details: error.details ?? null,
       },
-      { status: error.status },
+      { status: error.status, headers: error.headers },
     );
   }
 

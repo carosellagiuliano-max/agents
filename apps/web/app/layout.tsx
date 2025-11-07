@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+
+import { ensureCsrfToken } from '@/lib/security/csrf';
+
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
@@ -15,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  ensureCsrfToken();
   return (
     <html className="scroll-smooth" lang="de-CH">
       <body className={inter.className}>{children}</body>

@@ -3,6 +3,26 @@ import type { Route } from 'next';
 import Link from 'next/link';
 import { Heading } from '@schnittwerk/ui';
 
+const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.schnittwerk-vanessa.ch').replace(/\/$/, '');
+
+const LOCAL_BUSINESS_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'HairSalon',
+  '@id': `${baseUrl}/#business`,
+  name: 'Schnittwerk by Vanessa Carosella',
+  url: baseUrl,
+  description:
+    'Premium Hairstyling, Farbexpertise und nachhaltige Treatments im Herzen von St. Gallen.',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Rorschacher Str. 152',
+    addressLocality: 'St. Gallen',
+    postalCode: '9000',
+    addressCountry: 'CH',
+  },
+  priceRange: 'CHF 85-320',
+};
+
 const NAV_ITEMS: Array<{ href: Route; label: string }> = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Leistungen' },
@@ -14,6 +34,13 @@ const NAV_ITEMS: Array<{ href: Route; label: string }> = [
 export default function MarketingLayout({ children }: PropsWithChildren) {
   return (
     <div className="min-h-screen">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(LOCAL_BUSINESS_JSON_LD).replace(/</g, '\\u003c'),
+        }}
+        suppressHydrationWarning
+        type="application/ld+json"
+      />
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Heading className="text-2xl" level={2}>
