@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Sequenzdiagramm Online-Buchung</title>
+  <desc id="desc">Ablauf einer Online-Terminbuchung inklusive Bestätigungsmail.</desc>
+  <rect width="960" height="540" fill="#ffffff"/>
+  <g font-family="Inter, Arial, sans-serif" font-size="16" fill="#0f172a">
+    <text x="120" y="40" text-anchor="middle">Kund:in</text>
+    <text x="320" y="40" text-anchor="middle">Web App</text>
+    <text x="520" y="40" text-anchor="middle">API Layer</text>
+    <text x="720" y="40" text-anchor="middle">Postgres</text>
+    <text x="880" y="40" text-anchor="middle">Resend</text>
+  </g>
+  <g stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2">
+    <line x1="120" y1="60" x2="120" y2="500" />
+    <line x1="320" y1="60" x2="320" y2="500" />
+    <line x1="520" y1="60" x2="520" y2="500" />
+    <line x1="720" y1="60" x2="720" y2="500" />
+    <line x1="880" y1="60" x2="880" y2="500" />
+  </g>
+  <g font-family="Inter, Arial, sans-serif" font-size="14" fill="#0f172a">
+    <rect x="120" y="80" width="200" height="36" fill="#bfdbfe" stroke="#1d4ed8" rx="8" ry="8"/>
+    <text x="220" y="104" text-anchor="middle">1. Slots anfragen</text>
+    <line x1="320" y1="116" x2="520" y2="116" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="320" y="140" width="200" height="36" fill="#fde68a" stroke="#b45309" rx="8" ry="8"/>
+    <text x="420" y="164" text-anchor="middle">2. Verfügbarkeit prüfen</text>
+    <line x1="520" y1="172" x2="720" y2="172" stroke="#b45309" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="208" x2="520" y2="208" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="320" y="220" width="200" height="36" fill="#fbcfe8" stroke="#be185d" rx="8" ry="8"/>
+    <text x="420" y="244" text-anchor="middle">3. Termin buchen</text>
+    <line x1="320" y1="260" x2="520" y2="260" stroke="#be185d" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="520" y1="296" x2="720" y2="296" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="332" x2="520" y2="332" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="520" y="340" width="200" height="36" fill="#bbf7d0" stroke="#15803d" rx="8" ry="8"/>
+    <text x="620" y="364" text-anchor="middle">4. Event schreiben &amp; RLS prüfen</text>
+    <line x1="520" y1="384" x2="880" y2="384" stroke="#15803d" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="520" y="400" width="200" height="36" fill="#ddd6fe" stroke="#5b21b6" rx="8" ry="8"/>
+    <text x="620" y="424" text-anchor="middle">5. Bestätigungsmail senden</text>
+    <line x1="880" y1="436" x2="120" y2="436" stroke="#5b21b6" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="300" y="456" text-anchor="middle">6. UI zeigt Erfolg &amp; ICS</text>
+  </g>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0f172a" />
+    </marker>
+  </defs>
+</svg>

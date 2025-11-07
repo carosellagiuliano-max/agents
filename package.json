@@ -1,0 +1,26 @@
+{
+  "name": "schnittwerk-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@8.15.4",
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "pnpm --filter web lint",
+    "typecheck": "pnpm --filter web typecheck",
+    "build": "pnpm --filter web build",
+    "test": "pnpm --filter web test && pnpm --filter @schnittwerk/payments test && pnpm --filter @schnittwerk/lib test",
+    "db:migrate": "pnpm --filter db run migrate",
+    "db:seed": "pnpm --filter db run seed",
+    "policies:test": "pnpm --filter db run policies:test",
+    "lighthouse": "pnpm --filter web lighthouse"
+  },
+  "devDependencies": {
+    "husky": "^9.0.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "@sentry/cli": "link:packages/sentry-cli-stub",
+      "drizzle-orm": "0.30.10"
+    }
+  }
+}

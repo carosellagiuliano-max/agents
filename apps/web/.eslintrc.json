@@ -1,0 +1,7 @@
+{
+  "extends": ["next", "next/core-web-vitals"],
+  "rules": {
+    "@next/next/no-img-element": "error",
+    "react/jsx-sort-props": ["warn", { "callbacksLast": true }]
+  }
+}
