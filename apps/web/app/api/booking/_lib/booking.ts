@@ -8,7 +8,7 @@ import { createRequestLogger } from '@schnittwerk/lib';
 
 import { getDatabase } from '../../../../lib/db';
 import type { RequestActor } from './auth';
-import { ApiError } from './errors';
+import { ApiError } from '@/app/api/_lib/errors';
 import { sendAppointmentConfirmationEmail } from './email';
 import {
   BUSINESS_TIMEZONE,

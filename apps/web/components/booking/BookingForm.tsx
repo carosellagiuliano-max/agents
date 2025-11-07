@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DateTime } from 'luxon';
+import Turnstile, { type BoundTurnstileObject } from 'react-turnstile';
+
+import { CAPTCHA_HEADER_NAME, CSRF_HEADER_NAME } from '@/lib/security/headers';
 
 const BUSINESS_TIMEZONE = 'Europe/Zurich';
 const currencyFormatter = new Intl.NumberFormat('de-CH', {
@@ -34,6 +37,8 @@ type AvailabilitySlot = {
 type BookingFormProps = {
   services: ServiceOption[];
   staff: StaffOption[];
+  csrfToken: string;
+  captchaSiteKey?: string;
 };
 
 type FormState = 'idle' | 'loading' | 'submitting' | 'success' | 'error';
@@ -48,7 +53,7 @@ type ConfirmationState = {
 
 const today = DateTime.now().setZone(BUSINESS_TIMEZONE).toISODate();
 
-export function BookingForm({ services, staff }: BookingFormProps) {
+export function BookingForm({ services, staff, csrfToken, captchaSiteKey }: BookingFormProps) {
   const [selectedServiceId, setSelectedServiceId] = useState<string>(services[0]?.id ?? '');
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(today ?? '');
@@ -60,6 +65,9 @@ export function BookingForm({ services, staff }: BookingFormProps) {
 
   const formRef = useRef<HTMLFormElement>(null);
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() => crypto.randomUUID());
+  const captchaRef = useRef<BoundTurnstileObject | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+  const isCaptchaEnabled = Boolean(captchaSiteKey);
 
   const staffForService = useMemo(() => {
     return staff.filter((member) => member.serviceIds.includes(selectedServiceId));
@@ -165,16 +173,28 @@ export function BookingForm({ services, staff }: BookingFormProps) {
       return;
     }
 
+    if (isCaptchaEnabled && !captchaToken) {
+      setErrorMessage('Bitte bestätige, dass du kein Bot bist.');
+      return;
+    }
+
     setFormState('submitting');
     setErrorMessage(null);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Request-Id': crypto.randomUUID(),
+        [CSRF_HEADER_NAME]: csrfToken,
+      };
+
+      if (isCaptchaEnabled && captchaToken) {
+        headers[CAPTCHA_HEADER_NAME] = captchaToken;
+      }
+
       const response = await fetch('/api/booking/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Request-Id': crypto.randomUUID(),
-        },
+        headers,
         body: JSON.stringify(payload),
       });
 
@@ -202,6 +222,11 @@ export function BookingForm({ services, staff }: BookingFormProps) {
       setErrorMessage(
         error instanceof Error ? error.message : 'Der Termin konnte nicht gespeichert werden. Bitte versuche es erneut.',
       );
+    } finally {
+      if (isCaptchaEnabled) {
+        setCaptchaToken('');
+        captchaRef.current?.reset();
+      }
     }
   }
 
@@ -341,6 +366,34 @@ export function BookingForm({ services, staff }: BookingFormProps) {
           </label>
         </fieldset>
 
+        {captchaSiteKey ? (
+          <div className="flex justify-center">
+            <Turnstile
+              refreshExpired="auto"
+              retry="auto"
+              sitekey={captchaSiteKey}
+              onError={(_error, bound) => {
+                captchaRef.current = bound ?? null;
+                setCaptchaToken('');
+                setErrorMessage('Die Captcha-Bestätigung konnte nicht geladen werden. Bitte aktualisiere die Seite.');
+              }}
+              onExpire={(_token, bound) => {
+                captchaRef.current = bound ?? null;
+                setCaptchaToken('');
+                setErrorMessage('Die Captcha-Bestätigung ist abgelaufen. Bitte bestätige sie erneut.');
+              }}
+              onLoad={(_widgetId, bound) => {
+                captchaRef.current = bound;
+              }}
+              onSuccess={(token, _preCleared, bound) => {
+                captchaRef.current = bound;
+                setCaptchaToken(token);
+                setErrorMessage((current) => (current && current.toLowerCase().includes('captcha') ? null : current));
+              }}
+            />
+          </div>
+        ) : null}
+
         {errorMessage ? (
           <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">
             {errorMessage}
@@ -364,7 +417,11 @@ export function BookingForm({ services, staff }: BookingFormProps) {
             <p className="text-xs text-slate-500">Mit * markierte Felder sind Pflichtfelder.</p>
             <button
               className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={formState === 'loading' || formState === 'submitting'}
+            disabled={
+              formState === 'loading' ||
+              formState === 'submitting' ||
+              (isCaptchaEnabled && !captchaToken)
+            }
             type="submit"
             >
               {formState === 'submitting' ? 'Termin wird gespeichert …' : 'Termin verbindlich buchen'}

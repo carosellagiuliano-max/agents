@@ -18,9 +18,39 @@ function formatCurrency(amountCents: number): string {
 
 export default async function ShopPage() {
   const products = await listCatalogProducts();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.schnittwerk-vanessa.ch').replace(/\/$/, '');
+  const productStructuredData =
+    products.length === 0
+      ? []
+      : products.map((product) => ({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          '@id': `${baseUrl}/shop#product-${product.slug}`,
+          name: product.name,
+          description: product.description ?? undefined,
+          offers: product.variants.map((variant) => ({
+            '@type': 'Offer',
+            priceCurrency: 'CHF',
+            price: (variant.priceCents / 100).toFixed(2),
+            availability:
+              variant.availableQuantity === null || variant.availableQuantity > 0
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+            sku: variant.sku ?? undefined,
+          })),
+        }));
 
   return (
     <div className="space-y-10">
+      {productStructuredData.length > 0 ? (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(productStructuredData).replace(/</g, '\\u003c'),
+          }}
+          suppressHydrationWarning
+          type="application/ld+json"
+        />
+      ) : null}
       <header className="space-y-4">
         <Heading level={1}>Shop</Heading>
         <p className="max-w-2xl text-slate-700">
@@ -30,7 +60,11 @@ export default async function ShopPage() {
       </header>
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
-          <article className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm" key={product.id}>
+          <article
+            className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+            id={`product-${product.slug}`}
+            key={product.id}
+          >
             <header className="space-y-2">
               <Heading className="text-lg" level={2}>
                 {product.name}

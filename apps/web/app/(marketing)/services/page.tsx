@@ -26,9 +26,42 @@ export const metadata = {
   description: 'Services und Packages von Schnittwerk – Styling, Color, Treatments und Events.',
 };
 
+const BUSINESS_ID = `${(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.schnittwerk-vanessa.ch').replace(/\/$/, '')}/#business`;
+
 export default function ServicesPage() {
+  const servicesStructuredData = SERVICES.map((service) => {
+    const numericPrice = Number(service.price.replace(/[^0-9]/g, ''));
+    const priceValue = Number.isFinite(numericPrice) && numericPrice > 0 ? String(numericPrice) : undefined;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: service.name,
+      description: service.description,
+      provider: {
+        '@id': BUSINESS_ID,
+      },
+      areaServed: {
+        '@type': 'AdministrativeArea',
+        name: 'St. Gallen',
+      },
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'CHF',
+        price: priceValue,
+        availability: 'https://schema.org/InStoreOnly',
+      },
+    };
+  });
+
   return (
     <div className="space-y-10">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(servicesStructuredData).replace(/</g, '\\u003c'),
+        }}
+        suppressHydrationWarning
+        type="application/ld+json"
+      />
       <header className="space-y-4">
         <Heading level={1}>Unsere Leistungen</Heading>
         <p className="max-w-2xl text-slate-700">

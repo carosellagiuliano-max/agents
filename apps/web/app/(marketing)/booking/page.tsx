@@ -5,6 +5,7 @@ import { schema } from '@schnittwerk/db';
 
 import BookingForm, { ServiceOption, StaffOption } from '../../../components/booking/BookingForm';
 import { getDatabase } from '../../../lib/db';
+import { ensureCsrfToken } from '../../../lib/security/csrf';
 
 export const metadata: Metadata = {
   title: 'Termin buchen',
@@ -81,6 +82,8 @@ async function loadBookingData(): Promise<{ services: ServiceOption[]; staff: St
 
 export default async function BookingPage() {
   const { services, staff } = await loadBookingData();
+  const csrfToken = ensureCsrfToken();
+  const captchaSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? undefined;
 
   if (!services.length) {
     return (
@@ -103,7 +106,7 @@ export default async function BookingPage() {
           Die Bestätigung inklusive Kalender-ICS landet direkt in deinem Postfach.
         </p>
       </header>
-      <BookingForm services={services} staff={staff} />
+      <BookingForm captchaSiteKey={captchaSiteKey} csrfToken={csrfToken} services={services} staff={staff} />
       <section className="rounded-3xl bg-slate-900 p-6 text-white">
         <Heading className="text-lg" level={2}>
           Transparenter Salonservice
